@@ -1,64 +1,140 @@
- using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
- public class ProceduralGeneration : MonoBehaviour
+public class ProceduralGeneration : MonoBehaviour
 {
-    [SerializeField] private GameObject ground;
-    [SerializeField] private int height;
+    public int gridWidth = 50;
+    public int gridHeight = 50;
+    public float fillPercentage = 0.4f;
+    public Vector2Int startPos;
+    public Vector2Int endPos;
+    public GameObject walkableTile;
+    public GameObject obstacleTile;
+    [SerializeField] private int iterations;
+    private int[,] grid;
 
-    [SerializeField] private int width;
-    private List<GameObject> groundTiles = new List<GameObject>();
-    private List<GameObject> path =  new List<GameObject>();
-    private void Generate(int height, int width)
+    private void Start()
     {
-        for (int y = 0; y < height; y++)
+        startPos = new Vector2Int(0, 0);
+        endPos = new Vector2Int(gridWidth-1, gridHeight-1);
+        
+        grid = new int[gridWidth, gridHeight];
+        FillGrid();
+        ApplyAutomata();
+        InstantiateTiles();
+    }
+
+    private void FillGrid()
+    {
+        for (int i = 0; i < gridWidth; i++)
         {
-            for (int x = 0; x < this.width; x++)
-                groundTiles.Add(Instantiate(ground, new Vector2(x, y), Quaternion.identity));
+            for (int j = 0; j < gridHeight; j++)
+            {
+                if (i == startPos.x && j == startPos.y)
+                {
+                    grid[i, j] = 0;
+                }
+                else if (i == endPos.x && j == endPos.y)
+                {
+                    grid[i, j] = 0;
+                }
+                else if (Random.value < fillPercentage)
+                {
+                    grid[i, j] = 1;
+                }
+                else
+                {
+                    grid[i, j] = 0;
+                }
+            }
+        }
+    }
+
+    private void ApplyAutomata()
+    {
+        for (int i = 0; i < iterations; i++)
+        {
+            int[,] newGrid = new int[gridWidth, gridHeight];
+            for (int x = 0; x < gridWidth; x++)
+            {
+                for (int y = 0; y < gridHeight; y++)
+                {
+                    int neighborWallTiles = GetSurroundingWallCount(x, y);
+
+                    if (neighborWallTiles > 4)
+                        newGrid[x, y] = 1;
+                    else if (neighborWallTiles < 4)
+                        newGrid[x, y] = 0;
+                    else
+                        newGrid[x, y] = grid[x, y];
+                }
+            }
+
+            grid = newGrid;
+        }
+    }
+
+    private int GetSurroundingWallCount(int x, int y)
+    {
+        int wallCount = 0;
+        for (int i = -1; i < 2; i++)
+        {
+            for (int j = -1; j < 2; j++)
+            {
+                if (i == 0 && j == 0)
+                {
+                    continue;
+                }
+
+                int neighborX = x + i;
+                int neighborY = y + j;
+
+                if (neighborX >= 0 && neighborX < gridWidth && neighborY >= 0 && neighborY < gridHeight)
+                {
+                    if (grid[neighborX, neighborY] == 1)
+                    {
+                        wallCount++;
+                    }
+                }
+                else
+                {
+                    wallCount++;
+                }
+            }
         }
 
-        var topEdges = getTopEdge(this.height, this.width);
-        var bottomEdges = getBottomEdge(this.height, width);
-
-        int startTile = Random.Range(0, bottomEdges.Count - 1);
-        int endTile = Random.Range(width*(this.height-1), width*height);
-        Destroy(groundTiles[startTile]);
-        Destroy(groundTiles[endTile]);
+        return wallCount;
     }
 
-    private List<GameObject> getTopEdge(int height, int width)
+    private void InstantiateTiles()
     {
-        var topEdges = new List<GameObject>();
-
-        for (int i = width * (height - 1); i < width * height; i++)
+        for (int i = 0; i < gridWidth; i++)
         {
-            topEdges.Add(groundTiles[i]);
+            for (int j = 0; j < gridHeight; j++)
+            {
+                GameObject tile;
+                Vector2 tilePosition = new Vector3(i, j);
+
+                if (grid[i, j] == 0)
+                {
+                    if (Random.value < 0.3f) // 30% chance of spawning an obstacle
+                    {
+                        tile = Instantiate(obstacleTile, tilePosition, Quaternion.identity);
+                    }
+                    else
+                    {
+                        tile = Instantiate(walkableTile, tilePosition, Quaternion.identity);
+                    }
+                }
+                else
+                {
+                    tile = Instantiate(obstacleTile, tilePosition, Quaternion.identity);
+                }
+
+                tile.transform.parent = this.transform;
+            }
         }
-
-        return topEdges;
     }
 
-    private List<GameObject> getBottomEdge(int height, int width)
-    {
-        var bottomEdges = new List<GameObject>();
-        
-        for(int i=0;i<this.width;i++)
-            bottomEdges.Add(groundTiles[i]);
-
-        return bottomEdges;
-    }
-
-    void Start()
-    {
-        Generate(height,width);
-       
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }
+
