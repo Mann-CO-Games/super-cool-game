@@ -152,9 +152,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4e5a8622db758b459d518f000ec2117, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ground: {fileID: 7945530389722090048, guid: b11510b69ac061149bf37461f0fd6244, type: 3}
-  height: 20
-  width: 20
+  gridWidth: 12
+  gridHeight: 20
+  fillPercentage: 0.4
+  startPos: {x: 0, y: 0}
+  endPos: {x: 49, y: 49}
+  walkableTile: {fileID: 7544144042834595761, guid: 5822ad70bb0f39f4a8406d1ca8c4ee2a, type: 3}
+  obstacleTile: {fileID: 7544144042834595761, guid: f978845e618139f4998fe333ffc6dfaa, type: 3}
+  iterations: 3
 --- !u!4 &158029138
 Transform:
   m_ObjectHideFlags: 0
