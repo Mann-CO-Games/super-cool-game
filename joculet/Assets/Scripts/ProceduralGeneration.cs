@@ -1,8 +1,15 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEditor.Tilemaps;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class ProceduralGeneration : MonoBehaviour
-{
+{ 
+    public Tilemap tilemap = new Tilemap();
+
+    public TileBase[] walkableTiles;
+    public TileBase[] wallTiles;
     public int gridWidth = 50;
     public int gridHeight = 50;
     public float fillPercentage = 0.4f;
@@ -106,29 +113,46 @@ public class ProceduralGeneration : MonoBehaviour
         return wallCount;
     }
 
+    
+
     private void InstantiateTiles()
     {
+        
+        
         for (int i = 0; i < gridWidth; i++)
-        {
+        {   GameObject tile = new GameObject();
             for (int j = 0; j < gridHeight; j++)
             {
-                GameObject tile;
+                
                 Vector2 tilePosition = new Vector3(i, j);
 
                 if (grid[i, j] == 0)
                 {
-                    if (Random.value < 0.3f) // 30% chance of spawning an obstacle
-                    {
-                        tile = Instantiate(obstacleTile, tilePosition, Quaternion.identity);
+                   
+                    
+                        if (Random.value < 0.3f) // 30% chance of spawning an obstacle
+                        {
+                            int x = Random.Range(0, tilemap.size.x);
+                            int y = Random.Range(0, tilemap.size.y);
+                            int randomTileIndex = Random.Range(0, wallTiles.Length);
+                            tilemap.SetTile(new Vector3Int(i, j, 0), wallTiles[randomTileIndex]);
+                        }
+                        else
+                        {
+                            int x = Random.Range(0, tilemap.size.x);
+                            int y = Random.Range(0, tilemap.size.y);
+                            int randomTileIndex = Random.Range(0, walkableTiles.Length);
+                            tilemap.SetTile(new Vector3Int(i, j, 0), walkableTiles[randomTileIndex]);
+                        }
                     }
-                    else
-                    {
-                        tile = Instantiate(walkableTile, tilePosition, Quaternion.identity);
-                    }
-                }
+                
+
                 else
                 {
-                    tile = Instantiate(obstacleTile, tilePosition, Quaternion.identity);
+                    int x = Random.Range(0, tilemap.size.x);
+                    int y = Random.Range(0, tilemap.size.y);
+                    int randomTileIndex = Random.Range(0, wallTiles.Length);
+                    tilemap.SetTile(new Vector3Int(i, j, 0), wallTiles[randomTileIndex]);
                 }
 
                 tile.transform.parent = this.transform;
