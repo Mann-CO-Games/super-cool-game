@@ -170,6 +170,7 @@ MonoBehaviour:
   obstacleTile: {fileID: 428734050888135897, guid: fec78c04c18c82046b82ec03ba82d610,
     type: 3}
   iterations: 3
+  testTile: {fileID: 11400000, guid: 80d878f99cb4c7943b5c46bf5c1a6785, type: 2}
 --- !u!4 &158029138
 Transform:
   m_ObjectHideFlags: 0

@@ -1,8 +1,94 @@
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor.Tilemaps;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Random = UnityEngine.Random;
+
+
+public class BFS
+{
+    int[,] grid;
+    Vector2Int startPos;
+    Vector2Int endPos;
+    int gridWidth;
+    int gridHeight;
+
+    public BFS(int[,] grid, Vector2Int startPos, Vector2Int endPos, int gridWidth, int gridHeight)
+    {
+        this.grid = grid;
+        this.startPos = startPos;
+        this.endPos = endPos;
+        this.gridWidth = gridWidth;
+        this.gridHeight = gridHeight;
+    }
+
+    public List<Vector2Int> FindPath()
+    {
+        Queue<Vector2Int> queue = new Queue<Vector2Int>();
+        Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+        queue.Enqueue(startPos);
+        cameFrom[startPos] = startPos;
+
+        while (queue.Count > 0)
+        {
+            Vector2Int current = queue.Dequeue();
+
+            if (current == endPos)
+            {
+                return ReconstructPath(cameFrom, current);
+            }
+
+            List<Vector2Int> neighbors = GetNeighbors(current);
+            foreach (Vector2Int neighbor in neighbors)
+            {
+                if (!cameFrom.ContainsKey(neighbor))
+                {
+                    queue.Enqueue(neighbor);
+                    cameFrom[neighbor] = current;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private List<Vector2Int> ReconstructPath(Dictionary<Vector2Int, Vector2Int> cameFrom, Vector2Int current)
+    {
+        List<Vector2Int> path = new List<Vector2Int>();
+        path.Add(current);
+
+        while (current != startPos)
+        {
+            current = cameFrom[current];
+            path.Add(current);
+        }
+
+        path.Reverse();
+        return path;
+    }
+
+    private List<Vector2Int> GetNeighbors(Vector2Int current)
+    {
+        List<Vector2Int> neighbors = new List<Vector2Int>();
+        int[,] directions = new int[,] { { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 } };
+
+        for (int i = 0; i < 4; i++)
+        {
+            int x = current.x + directions[i, 0];
+            int y = current.y + directions[i, 1];
+
+            if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight && grid[x, y] == 0)
+            {
+                neighbors.Add(new Vector2Int(x, y));
+            }
+        }
+
+        return neighbors;
+    }
+}
+
 
 public class ProceduralGeneration : MonoBehaviour
 { 
@@ -19,18 +105,78 @@ public class ProceduralGeneration : MonoBehaviour
     public GameObject obstacleTile;
     [SerializeField] private int iterations;
     private int[,] grid;
-
+    public Tile testTile;
     private void Start()
     {
+        
+        
+
+       
         startPos = new Vector2Int(0, 0);
         endPos = new Vector2Int(gridWidth-1, gridHeight-1);
-        
+
+
+        do
+        {
+            ConstructGrid();
+        } while (!ConstructGrid());
+
+
+
+    }
+
+    private bool ConstructGrid()
+    {
+        List<Vector2Int> path = new List<Vector2Int>();
         grid = new int[gridWidth, gridHeight];
         FillGrid();
         ApplyAutomata();
         InstantiateTiles();
+        
+        var startpositions = getBottomStartingPoints();
+        var endpositions = getTopEndPoints();
+        foreach(var s in startpositions)
+        foreach (var e in endpositions)
+        {
+            BFS bfs = new BFS(grid,s,e,gridWidth,gridHeight);
+            path = bfs.FindPath();
+            if (path != null )
+            {
+                foreach (var p in path)
+                {
+                    tilemap.SetTile(new Vector3Int(p.x, p.y, 0), testTile);
+                }
+
+                return true;
+            }
+
+        }
+
+        return false;
     }
 
+    private List<Vector2Int> getBottomStartingPoints()
+    {
+        List<Vector2Int> startingPositions = new List<Vector2Int>();
+
+        for(int i=0;i<gridWidth;i++)
+            if(grid[0,i] == 0)
+                startingPositions.Add(new Vector2Int(i,0));
+                
+
+        return startingPositions;
+    }
+    private List<Vector2Int> getTopEndPoints()
+    {
+        List<Vector2Int> startingPositions = new List<Vector2Int>();
+
+        for(int i=0;i<gridWidth;i++)
+            if(grid[gridHeight-1,i]==0)
+                startingPositions.Add(new Vector2Int(i,gridHeight-1));
+                
+
+        return startingPositions;
+    }
     private void FillGrid()
     {
         for (int i = 0; i < gridWidth; i++)
